@@ -1,6 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <string>
+#include <vector>
+#include <algorithm>
 
 using namespace std;
 namespace cb
@@ -17,6 +20,7 @@ namespace cb
   public:
     static string fileName;
     static string idFN;
+    static string remIDsFN;
     Contact(string, string, string, string);
     void writeCSV(Contact &);
     void setID();
@@ -24,6 +28,7 @@ namespace cb
 
   string Contact::fileName = "contacts.csv";
   string Contact::idFN = "id_info.csv";
+  string Contact::remIDsFN = "remContactIDs.csv";
 
   // Not member function of class
   void createContact();
@@ -31,7 +36,11 @@ namespace cb
   bool isFileEmpty(ofstream &);
   void showAllContacts();
   void showContactByID();
+  void deleteContactByID();
+  void saveRemContactIDs();
+  void initRemContactIDs();
 
+  vector<int> remContactIDs;
 }
 
 // #########################################################################
@@ -47,20 +56,56 @@ cb::Contact::Contact(string fn, string ln, string pn, string em)
 
 void cb::Contact::writeCSV(Contact &c)
 {
+  vector<string> lines;
+  string readline;
   string margedString = to_string(c.id) + "," + c.firstName + "," + c.lastName + "," + c.contactNo + "," + c.email + "\n";
+
+  ifstream fin;
+  fin.open(Contact::fileName);
+
+  if (fin.is_open())
+  {
+    while (!(fin.eof()))
+    {
+      getline(fin, readline);
+      lines.push_back(readline);
+    }
+    fin.close();
+
+    lines.pop_back();
+  }
 
   fstream file;
 
-  file.open(fileName, ios_base::app | ios_base::in);
+  file.open(fileName, ios_base::out | ios_base::in);
   if (file.is_open())
   {
-    if (cb::isFileEmpty(file))
+    if (cb::isFileEmpty(file) && lines.size() < 1)
     {
       string headerStr = "ID,FirstName,LastName,PhoneNo.,EmailID\n";
       file << headerStr;
+      file << margedString;
+    }
+    else
+    {
+      for (int i = 0; i < lines.size(); i++)
+      {
+        if (c.id == i)
+        {
+          file << margedString;
+        }
+        else
+        {
+          file << lines[i] << endl;
+        }
+      }
+
+      if (c.id > lines.size() - 1)
+      {
+        file << margedString;
+      }
     }
 
-    file << margedString;
     file.close();
   }
   else
@@ -73,10 +118,19 @@ void cb::Contact::setID()
 {
   string readStr;
   fstream file;
+  bool isRemContactIDs = remContactIDs.size() > 0;
+  sort(remContactIDs.begin(), remContactIDs.end());
+  // sort the vector in accending order
 
   file.open(idFN, ios_base::in | ios_base::out);
   if (file.is_open())
   {
+    if (isRemContactIDs)
+    {
+      id = remContactIDs[0];
+      remContactIDs.erase(remContactIDs.begin()); // remove the first element
+    }
+
     if (cb::isFileEmpty(file))
     {
       file << id;
@@ -85,8 +139,8 @@ void cb::Contact::setID()
     {
       getline(file, readStr);
       file.seekg(0, ios_base::beg);
-      id = stoi(readStr) + 1;
-      file << id;
+      id = isRemContactIDs ? id : stoi(readStr) + 1;
+      file << (isRemContactIDs ? stoi(readStr) : stoi(readStr) + 1);
     }
 
     file.close();
@@ -155,10 +209,10 @@ void cb::showAllContacts()
       }
 
       getline(fin, readStr, ',');
-      if (readStr.empty())
-        continue;
+      if (empty(readStr)) continue;
+      
       cout << "##########################################\n";
-      cout << "|" << setw(15) << "ID: " << setw(25) << readStr << "|" << endl;
+      cout << "|" << setw(15) << "ID: " << setw(25) << stoi(readStr) << "|" <<endl;
 
       getline(fin, readStr, ',');
       cout << "|" << setw(15) << "First Name: " << setw(25) << readStr << "|" << endl;
@@ -172,7 +226,7 @@ void cb::showAllContacts()
       getline(fin, readStr, '\n');
       cout << "|" << setw(15) << "Email ID: " << setw(25) << readStr << "|" << endl;
 
-    cout << "##########################################\n\n";
+      cout << "##########################################\n\n";
     }
   }
   else
@@ -236,5 +290,111 @@ void cb::showContactByID()
       }
     }
     file.close();
+  }
+}
+
+void cb::deleteContactByID()
+{
+  vector<string> lines;
+  string readline;
+  int id;
+  cout << "Enter the id which you want to delete: ";
+  cin >> id;
+
+  ifstream fin;
+  fin.open(Contact::fileName);
+
+  if (fin.fail())
+  {
+    cout << "Something went wrong! cannot open the file." << endl;
+    // file.close();
+    return;
+  }
+
+  // cout<<fin.tellp()<<endl;
+  while (!(fin.eof()))
+  {
+    getline(fin, readline);
+    lines.push_back(readline);
+  }
+
+  lines.pop_back();
+
+  fin.close();
+
+  if ((id > (lines.size() - 1)) || id < 1 || count(remContactIDs.begin(), remContactIDs.end(), id))
+  {
+    cout << "ID No. '" << id << "' not found" << endl;
+    fin.close();
+    return;
+  }
+
+  ofstream fout;
+  fout.open(Contact::fileName);
+
+  if (fout.fail())
+  {
+    cout << "Something went wrong! cannot open the file." << endl;
+    return;
+  }
+
+  for (int i = 0; i < lines.size(); i++)
+  {
+    if (id == i)
+    {
+      remContactIDs.push_back(id);
+      fout << endl;
+    }
+    else
+    {
+      fout << lines[i] << endl;
+    }
+  }
+
+  fout.close();
+}
+
+void cb::saveRemContactIDs()
+{
+
+  ofstream fout;
+  fout.open(Contact::remIDsFN);
+
+  if (fout.is_open())
+  {
+    for (int i = 0; i < remContactIDs.size(); i++)
+    {
+      fout << remContactIDs[i] << endl;
+    }
+
+    fout.close();
+  }
+  else
+  {
+    cout << "Something went wrong! cannot open the file." << endl;
+  }
+}
+
+void cb::initRemContactIDs()
+{
+  string readline;
+  ifstream fin;
+  fin.open(Contact::remIDsFN);
+
+  if (fin.is_open())
+  {
+    while (!(fin.eof()))
+    {
+      getline(fin, readline);
+      if (empty(readline))
+        continue;
+      remContactIDs.push_back(stoi(readline));
+    }
+
+    fin.close();
+  }
+  else
+  {
+    cout << "Something went wrong! cannot open the file." << endl;
   }
 }

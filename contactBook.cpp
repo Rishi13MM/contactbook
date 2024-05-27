@@ -5,12 +5,10 @@
 
 using namespace std;
 
-void createContact();
-
 int main()
 {
   int choice, quit = 0;
-
+  cb::initRemContactIDs();
   while (quit == 0)
   {
     system("cls");
@@ -27,7 +25,7 @@ int main()
 
     cout << "Enter your choice: ";
     cin >> choice;
-    cout<<"\n";
+    cout << "\n";
     switch (choice)
     {
     case 1:
@@ -37,6 +35,9 @@ int main()
       getch();
       break;
     case 2:
+      cb::deleteContactByID();
+      cout << "Press any key to continue." << endl;
+      getch();
       break;
     case 3:
       cb::showContactByID();
@@ -58,5 +59,7 @@ int main()
       break;
     }
   }
+
+  cb::saveRemContactIDs();
   return 0;
 }
