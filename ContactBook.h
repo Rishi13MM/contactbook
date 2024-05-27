@@ -14,21 +14,23 @@ namespace cb
     string contactNo;
     string email;
 
-    string fileName;
-    string idFN;
-
   public:
+    static string fileName;
+    static string idFN;
     Contact(string, string, string, string);
     void writeCSV(Contact &);
     void setID();
   };
+
+  string Contact::fileName = "contacts.csv";
+  string Contact::idFN = "id_info.csv";
 
   // Not member function of class
   void createContact();
   bool isFileEmpty(fstream &);
   bool isFileEmpty(ofstream &);
   void showAllContacts();
-  void printContact(string);
+  void showContactByID();
 
 }
 
@@ -37,8 +39,6 @@ namespace cb
 cb::Contact::Contact(string fn, string ln, string pn, string em)
 {
   id = 1;
-  idFN = "id_info.csv";
-  fileName = "contacts.csv";
   firstName = fn;
   lastName = ln;
   contactNo = pn;
@@ -138,7 +138,7 @@ void cb::showAllContacts()
 
   string fname = "contacts.csv";
   string readStr;
-  int i=1;
+  int i = 1;
 
   fstream fin;
   fin.open(fname);
@@ -147,29 +147,32 @@ void cb::showAllContacts()
   {
     while (!(fin.eof()))
     {
-      if(i==1){
+      if (i == 1)
+      {
         i++;
-        getline(fin,readStr);
+        getline(fin, readStr);
         continue;
       }
 
       getline(fin, readStr, ',');
       if (readStr.empty())
         continue;
-      cout << setw(15) << "ID: " << setw(25) << readStr << endl;
+      cout << "##########################################\n";
+      cout << "|" << setw(15) << "ID: " << setw(25) << readStr << "|" << endl;
 
       getline(fin, readStr, ',');
-      cout << setw(15) << "First Name: " << setw(25) << readStr << endl;
+      cout << "|" << setw(15) << "First Name: " << setw(25) << readStr << "|" << endl;
 
       getline(fin, readStr, ',');
-      cout << setw(15) << "Last Name: " << setw(25) << readStr << endl;
+      cout << "|" << setw(15) << "Last Name: " << setw(25) << readStr << "|" << endl;
 
       getline(fin, readStr, ',');
-      cout << setw(15) << "Phone No: " << setw(25) << readStr << endl;
+      cout << "|" << setw(15) << "Phone No: " << setw(25) << readStr << "|" << endl;
 
       getline(fin, readStr, '\n');
-      cout << setw(15) << "Email ID: " << setw(25) << readStr << endl
-           << endl;
+      cout << "|" << setw(15) << "Email ID: " << setw(25) << readStr << "|" << endl;
+
+    cout << "##########################################\n\n";
     }
   }
   else
@@ -178,4 +181,60 @@ void cb::showAllContacts()
   }
 
   fin.close();
+}
+
+void cb::showContactByID()
+{
+  string readStr;
+  int id;
+  printf("Enter the contact id: ");
+  cin >> id;
+
+  fstream file;
+  file.open(Contact::fileName, ios_base::in | ios_base::out);
+
+  if (file.is_open())
+  {
+    if (!(cb::isFileEmpty(file)))
+    {
+      getline(file, readStr);
+      while (!(file.eof()))
+      {
+        getline(file, readStr, ',');
+
+        if (empty(readStr))
+        {
+          cout << "contact with id '" << id << "' not found!" << endl;
+          continue;
+        }
+
+        if (stoi(readStr) == id)
+        {
+          cout << "\n##########################################\n";
+
+          cout << "|" << setw(15) << "ID: " << setw(25) << readStr << "|" << endl;
+
+          getline(file, readStr, ',');
+          cout << "|" << setw(15) << "First Name: " << setw(25) << readStr << "|" << endl;
+
+          getline(file, readStr, ',');
+          cout << "|" << setw(15) << "Last Name: " << setw(25) << readStr << "|" << endl;
+
+          getline(file, readStr, ',');
+          cout << "|" << setw(15) << "Phone no: " << setw(25) << readStr << "|" << endl;
+
+          getline(file, readStr, '\n'); // default dlt is \n
+          cout << "|" << setw(15) << "Email ID: " << setw(25) << readStr << "|" << endl;
+
+          cout << "##########################################\n\n";
+          break;
+        }
+        else
+        {
+          getline(file, readStr);
+        }
+      }
+    }
+    file.close();
+  }
 }

@@ -27,7 +27,7 @@ int main()
 
     cout << "Enter your choice: ";
     cin >> choice;
-
+    cout<<"\n";
     switch (choice)
     {
     case 1:
@@ -39,6 +39,9 @@ int main()
     case 2:
       break;
     case 3:
+      cb::showContactByID();
+      cout << "Press any key to continue." << endl;
+      getch();
       break;
     case 4:
       cb::showAllContacts();
