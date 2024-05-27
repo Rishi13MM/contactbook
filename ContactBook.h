@@ -1,6 +1,6 @@
 #include <iostream>
-#include <string>
 #include <fstream>
+#include <iomanip>
 
 using namespace std;
 namespace cb
@@ -25,7 +25,10 @@ namespace cb
 
   // Not member function of class
   void createContact();
-  bool isFileEmpty(ifstream &);
+  bool isFileEmpty(fstream &);
+  bool isFileEmpty(ofstream &);
+  void showAllContacts();
+  void printContact(string);
 
 }
 
@@ -33,7 +36,7 @@ namespace cb
 
 cb::Contact::Contact(string fn, string ln, string pn, string em)
 {
-  id = 0;
+  id = 1;
   idFN = "id_info.csv";
   fileName = "contacts.csv";
   firstName = fn;
@@ -46,46 +49,51 @@ void cb::Contact::writeCSV(Contact &c)
 {
   string margedString = to_string(c.id) + "," + c.firstName + "," + c.lastName + "," + c.contactNo + "," + c.email + "\n";
 
-  ofstream fout;
+  fstream file;
 
-  fout.open(fileName, ios_base::app);
-  fout << margedString;
-  fout.close();
+  file.open(fileName, ios_base::app | ios_base::in);
+  if (file.is_open())
+  {
+    if (cb::isFileEmpty(file))
+    {
+      string headerStr = "ID,FirstName,LastName,PhoneNo.,EmailID\n";
+      file << headerStr;
+    }
+
+    file << margedString;
+    file.close();
+  }
+  else
+  {
+    cout << "Something went wrong! Cannot open the file." << endl;
+  }
 }
 
 void cb::Contact::setID()
 {
+  string readStr;
+  fstream file;
+
+  file.open(idFN, ios_base::in | ios_base::out);
+  if (file.is_open())
   {
-    char *read;
-    bool isFEmpty = false;
-
-    ifstream fin;
-    ofstream fout;
-
-    // check file is empty or not
-    fin.open(idFN);
-    isFEmpty = cb::isFileEmpty(fin);
-    fin.close();
-
-    // write default id -1 if file is empty
-    if (isFEmpty)
+    if (cb::isFileEmpty(file))
     {
-      fout.open(idFN);
-      fout << -1;
-      fout.close();
+      file << id;
+    }
+    else
+    {
+      getline(file, readStr);
+      file.seekg(0, ios_base::beg);
+      id = stoi(readStr) + 1;
+      file << id;
     }
 
-    // code need to run whether file is empty or not
-    fin.open(idFN);
-    fin.getline(read, INT_MAX - 1);
-    id = stoi(read) + 1;
-    fin.close();
-    // cout << "id: " << id << endl;
-
-    // write id in the csv file
-    fout.open(idFN);
-    fout << id;
-    fout.close();
+    file.close();
+  }
+  else
+  {
+    cout << "Something went wrong! Cannot open the file." << endl;
   }
 }
 
@@ -110,12 +118,64 @@ void cb::createContact()
   cin >> em;
 
   cb::Contact c = cb::Contact(fn, ln, pn, em);
-  // c.setID();
+  c.setID();
   c.writeCSV(c);
 }
 
-bool cb::isFileEmpty(ifstream &fin)
+bool cb::isFileEmpty(fstream &file)
 {
-  fin.seekg(0, ios_base::end);
-  return fin.tellg() == 0 ? true : false;
+  bool isEmpty;
+  file.seekg(0, ios_base::end);
+  isEmpty = file.tellg() == 0 ? true : false;
+
+  // reset read position
+  file.seekg(0, ios_base::beg);
+  return isEmpty;
+}
+
+void cb::showAllContacts()
+{
+
+  string fname = "contacts.csv";
+  string readStr;
+  int i=1;
+
+  fstream fin;
+  fin.open(fname);
+
+  if (!(cb::isFileEmpty(fin)))
+  {
+    while (!(fin.eof()))
+    {
+      if(i==1){
+        i++;
+        getline(fin,readStr);
+        continue;
+      }
+
+      getline(fin, readStr, ',');
+      if (readStr.empty())
+        continue;
+      cout << setw(15) << "ID: " << setw(25) << readStr << endl;
+
+      getline(fin, readStr, ',');
+      cout << setw(15) << "First Name: " << setw(25) << readStr << endl;
+
+      getline(fin, readStr, ',');
+      cout << setw(15) << "Last Name: " << setw(25) << readStr << endl;
+
+      getline(fin, readStr, ',');
+      cout << setw(15) << "Phone No: " << setw(25) << readStr << endl;
+
+      getline(fin, readStr, '\n');
+      cout << setw(15) << "Email ID: " << setw(25) << readStr << endl
+           << endl;
+    }
+  }
+  else
+  {
+    cout << "Their is no contact avaiable!" << endl;
+  }
+
+  fin.close();
 }
