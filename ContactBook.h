@@ -39,6 +39,8 @@ namespace cb
   void deleteContactByID();
   void saveRemContactIDs();
   void initRemContactIDs();
+  string remNewLineChar(string);
+  void createFiles();
 
   vector<int> remContactIDs;
 }
@@ -209,10 +211,17 @@ void cb::showAllContacts()
       }
 
       getline(fin, readStr, ',');
-      if (empty(readStr)) continue;
-      
+      if (empty(readStr))
+        continue;
+      else if (empty(remNewLineChar(readStr)))
+      {
+        fin.close();
+        cout << "Their is no contact avaiable!" << endl;
+        return;
+      }
+
       cout << "##########################################\n";
-      cout << "|" << setw(15) << "ID: " << setw(25) << stoi(readStr) << "|" <<endl;
+      cout << "|" << setw(15) << "ID: " << setw(25) << stoi(readStr) << "|" << endl;
 
       getline(fin, readStr, ',');
       cout << "|" << setw(15) << "First Name: " << setw(25) << readStr << "|" << endl;
@@ -255,12 +264,14 @@ void cb::showContactByID()
       while (!(file.eof()))
       {
         getline(file, readStr, ',');
+        readStr = remNewLineChar(readStr);
 
-        if (empty(readStr))
+        if (empty(readStr) || readStr == "\n")
         {
-          cout << "contact with id '" << id << "' not found!" << endl;
+          cout << "\ncontact with id '" << id << "' not found!" << endl;
           continue;
         }
+        // cout<<readStr<<"readstr"<<endl;
 
         if (stoi(readStr) == id)
         {
@@ -280,7 +291,7 @@ void cb::showContactByID()
           getline(file, readStr, '\n'); // default dlt is \n
           cout << "|" << setw(15) << "Email ID: " << setw(25) << readStr << "|" << endl;
 
-          cout << "##########################################\n\n";
+          cout << "##########################################\n";
           break;
         }
         else
@@ -288,6 +299,10 @@ void cb::showContactByID()
           getline(file, readStr);
         }
       }
+    }
+    else
+    {
+      cout << "\ncontact with id '" << id << "' not found!" << endl;
     }
     file.close();
   }
@@ -304,53 +319,55 @@ void cb::deleteContactByID()
   ifstream fin;
   fin.open(Contact::fileName);
 
-  if (fin.fail())
+  if (fin.is_open())
   {
-    cout << "Something went wrong! cannot open the file." << endl;
-    // file.close();
-    return;
-  }
+    while (!(fin.eof()))
+    {
+      getline(fin, readline);
+      lines.push_back(readline);
+    }
 
-  // cout<<fin.tellp()<<endl;
-  while (!(fin.eof()))
-  {
-    getline(fin, readline);
-    lines.push_back(readline);
-  }
+    lines.pop_back();
 
-  lines.pop_back();
-
-  fin.close();
-
-  if ((id > (lines.size() - 1)) || id < 1 || count(remContactIDs.begin(), remContactIDs.end(), id))
-  {
-    cout << "ID No. '" << id << "' not found" << endl;
     fin.close();
+
+    if ((id > (lines.size() - 1)) || id < 1 || lines.size() == 0 || count(remContactIDs.begin(), remContactIDs.end(), id))
+    {
+      cout << "\nID No. '" << id << "' not found" << endl;
+      fin.close();
+      return;
+    }
+  }
+  else
+  {
+    cout << "\nSomething went wrong! cannot open the file." << endl;
     return;
   }
 
   ofstream fout;
   fout.open(Contact::fileName);
 
-  if (fout.fail())
+  if (fout.is_open())
   {
-    cout << "Something went wrong! cannot open the file." << endl;
-    return;
-  }
 
-  for (int i = 0; i < lines.size(); i++)
+    for (int i = 0; i < lines.size(); i++)
+    {
+      if (id == i)
+      {
+        remContactIDs.push_back(id);
+        fout << endl;
+      }
+      else
+      {
+        fout << lines[i] << endl;
+      }
+    }
+    cout << "\nContact with id '" << id << "' is deleted!" << endl;
+  }
+  else
   {
-    if (id == i)
-    {
-      remContactIDs.push_back(id);
-      fout << endl;
-    }
-    else
-    {
-      fout << lines[i] << endl;
-    }
+    cout << "\nSomething went wrong! cannot open the file." << endl;
   }
-
   fout.close();
 }
 
@@ -397,4 +414,31 @@ void cb::initRemContactIDs()
   {
     cout << "Something went wrong! cannot open the file." << endl;
   }
+}
+
+string cb::remNewLineChar(string str)
+{
+  string newStr = "";
+
+  for (int i = 0; i < str.size(); i++)
+  {
+    char ch = str[i];
+    if (!(ch == '\n'))
+      newStr += ch;
+  }
+
+  return newStr;
+}
+
+void cb::createFiles()
+{
+  ofstream file;
+  file.open(Contact::fileName, ios_base::app);
+  file.close();
+
+  file.open(Contact::idFN, ios_base::app);
+  file.close();
+
+  file.open(Contact::remIDsFN, ios_base::app);
+  file.close();
 }

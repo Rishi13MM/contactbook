@@ -7,8 +7,9 @@ using namespace std;
 
 int main()
 {
-  int choice, quit = 0;
+  int choice = 10, quit = 0;
   cb::initRemContactIDs();
+  cb::createFiles();
   while (quit == 0)
   {
     system("cls");
@@ -25,28 +26,31 @@ int main()
 
     cout << "Enter your choice: ";
     cin >> choice;
-    cout << "\n";
+    cin.clear();
+    fflush(stdin);
+
+    cout << endl;
     switch (choice)
     {
     case 1:
       cb::createContact();
-      cout << "** Contact created & Saved!**" << endl;
-      cout << "Press any key to continue." << endl;
+      cout << "\n** Contact created & Saved!**" << endl;
+      cout << "\nPress any key to continue." << endl;
       getch();
       break;
     case 2:
       cb::deleteContactByID();
-      cout << "Press any key to continue." << endl;
+      cout << "\nPress any key to continue." << endl;
       getch();
       break;
     case 3:
       cb::showContactByID();
-      cout << "Press any key to continue." << endl;
+      cout << "\nPress any key to continue." << endl;
       getch();
       break;
     case 4:
       cb::showAllContacts();
-      cout << "Press any key to continue." << endl;
+      cout << "\nPress any key to continue." << endl;
       getch();
       break;
     case 5:
@@ -55,6 +59,7 @@ int main()
     default:
       cout << "Invalid Choice, a choice must be 1,2,3,4 or 5." << endl;
       cout << "Press any key to continue." << endl;
+      // fflush(stdin);
       getch();
       break;
     }
